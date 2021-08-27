@@ -1,0 +1,71 @@
+<?xml version="1.0" encoding="utf-8"?>
+<executable>
+  <category>Transform</category>
+  <title>SNR</title>
+  <description>
+   This module computes the SNR
+  </description>
+  <version>1.0.0</version>
+  <documentation-url></documentation-url>
+  <license></license>
+  <contributor>Francois Budin</contributor>
+<acknowledgements>
+</acknowledgements>
+  <parameters>
+    <label>Input/Output</label>
+    <description>Input/output parameters</description>
+    <image>
+      <name>inputImage</name>
+      <label>Input Image</label>
+      <description>Input image</description>
+      <channel>input</channel>
+      <index>0</index>
+      <default></default>
+    </image>
+    <image>
+      <name>secondImage</name>
+      <label>Second Image</label>
+      <description>Second image</description>
+      <channel>input</channel>
+      <flag>s</flag>
+      <longflag>image</longflag>
+      <default></default>
+    </image>
+    <image>
+      <name>insideRegion</name>
+      <label>Inside Region</label>
+      <description>Inside Region</description>
+      <channel>input</channel>
+      <flag>i</flag>
+      <longflag>inside</longflag>
+      <default></default>
+    </image>
+    <image>
+      <name>insideRegion2</name>
+      <label>Second Inside Region</label>
+      <description>Second Inside Region</description>
+      <channel>input</channel>
+      <flag>c</flag>
+      <longflag>inside2</longflag>
+      <default></default>
+    </image>
+    <image>
+      <name>outsideRegion</name>
+      <label>Outside Region</label>
+      <description>Outside Region</description>
+      <channel>input</channel>
+      <flag>o</flag>
+      <longflag>o</longflag>
+      <default></default>
+    </image>
+    <boolean>
+      <name>useR</name>
+      <label>Use R coefficient</label>
+      <description>The R coefficient is set to 0.655 instead of 1</description>
+      <flag>R</flag>
+      <longflag>useR</longflag>
+      <default>false</default>
+    </boolean>
+  </parameters>
+</executable>
+
