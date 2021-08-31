@@ -21,15 +21,15 @@ def main(args):
 			if os.path.isfile(img_fn) and True in [ext in img_fn for ext in [".nrrd", ".nrrd.gz", ".nii", ".nii.gz", ".gipl", ".gipl.gz"]]:
 				img_obj = {}
 				img_obj["img"] = img_fn
-				img_obj["out"] = outpath  # Is it better to do  "out_path = os.path.normpath("/".join([args.out]))" only once at the start
+				img_obj["out"] = outpath + img_fn.replace(args.dir,'')
 				img_fn_array.append(img_obj)
 				
 	for img_obj in img_fn_array:
 		image = img_obj["img"]
 		out = img_obj["out"]
 		
-		if not os.path.exists(out):
-			os.makedirs(out)
+		if not os.path.exists(os.path.dirname(out)):
+			os.makedirs(os.path.dirname(out))
 		SetSpacing(image, out, args.spacing)
 
 		
