@@ -42,7 +42,7 @@ if __name__ ==  '__main__':
 	input_params.add_argument('--image', type=str, help='Input 3D image')
 	input_params.add_argument('--dir', type=str, help='Input directory with 3D images')
 
-	input_group.add_argument('-s','--spacing', type=float, help='Wanted output x spacing', default=0.5)
+	input_group.add_argument('-s','--spacing', nargs="+", type=float, help='Wanted output x spacing', default=[0.5,0.5,0.5])
 
 	output_params = parser.add_argument_group('Output parameters')
 	output_params.add_argument('--out', type=str, help='Output directory', required=True)

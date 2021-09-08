@@ -1,37 +1,69 @@
 import os
 import itk
+import numpy as np
 import shutil
+import SimpleITK as sitk
+
+from numpy.ma.core import getdata
 
 # #####################################
 #  setFile spacing
 # #####################################
 
-def SetSpacing(filepath,outpath,spacing=0.5):
-    print("Reading : " + filepath)
-    input_image = itk.imread(filepath)
+def SetSpacing(filepath,outpath,output_spacing=[0.5, 0.5, 0.5]):
+    
+    print("Reading:", filepath)
+    img = itk.imread(filepath)
 
-    input_size = itk.size(input_image)
-    input_spacing = itk.spacing(input_image)
+    spacing = np.array(img.GetSpacing())
+    output_spacing = np.array(output_spacing)
 
-    if input_spacing != spacing:
+    # print(spacing)
+    # print(output_spacing)
 
-        input_origin = itk.origin(input_image)
-        Dimension = input_image.GetImageDimension()
-        scale = input_spacing[0]/spacing
+    if not np.array_equal(spacing,output_spacing):
 
-        output_size = [int(input_size[d] * scale) for d in range(Dimension)]
-        output_spacing = [input_spacing[d] / scale for d in range(Dimension)]
-        output_origin = [input_origin[d] + 0.5 * (output_spacing[d] - input_spacing[d]) for d in range(Dimension)]
+        size = itk.size(img)
+        scale = spacing/output_spacing
 
-        interpolator = itk.LinearInterpolateImageFunction.New(input_image)
+        output_size = (np.array(size)*scale).astype(int).tolist()
+        output_origin = img.GetOrigin()
 
-        resampled = itk.resample_image_filter(
-            input_image,
-            interpolator=interpolator,
-            size=output_size,
-            output_spacing=output_spacing,
-            output_origin=output_origin,
-        )
-        itk.imwrite(resampled, outpath)
+        #Find new origin
+        output_physical_size = np.array(output_size)*np.array(output_spacing)
+        input_physical_size = np.array(size)*spacing
+        output_origin = np.array(output_origin) - (output_physical_size - input_physical_size)/2.0
+
+        img_info = itk.template(img)[1]
+        pixel_type = img_info[0]
+        pixel_dimension = img_info[1]
+
+        VectorImageType = itk.Image[pixel_type, pixel_dimension]
+
+        if True in [seg in os.path.basename(filepath) for seg in ["seg","Seg"]]:
+            InterpolatorType = itk.NearestNeighborInterpolateImageFunction[VectorImageType, itk.D]
+            # print("Rescale Seg with spacing :", output_spacing)
+        else:
+            InterpolatorType = itk.LinearInterpolateImageFunction[VectorImageType, itk.D]
+            # print("Rescale Scan with spacing :", output_spacing)
+
+        ResampleType = itk.ResampleImageFilter[VectorImageType, VectorImageType]
+
+        resampleImageFilter = ResampleType.New()
+        interpolator = InterpolatorType.New()
+        resampleImageFilter.SetOutputSpacing(output_spacing)
+        resampleImageFilter.SetOutputOrigin(output_origin)
+        resampleImageFilter.SetOutputDirection(img.GetDirection())
+        
+        resampleImageFilter.SetInterpolator(interpolator)
+        resampleImageFilter.SetSize(output_size)
+        resampleImageFilter.SetInput(img)
+        resampleImageFilter.Update()
+
+        resampled_img = resampleImageFilter.GetOutput()
+
+        itk.imwrite(resampled_img, outpath)
+
     else:
-        itk.imwrite(input_image, outpath)
+        # print("Already at the wanted spacing")
+        itk.imwrite(img, outpath)
