@@ -24,14 +24,14 @@ def main(args):
 				img_obj["out"] = outpath + img_fn.replace(args.dir,'')
 				img_fn_array.append(img_obj)
 				
-	print("Rescale with spacing :", args.spacing)
 	for img_obj in img_fn_array:
 		image = img_obj["img"]
 		out = img_obj["out"]
 		
 		if not os.path.exists(os.path.dirname(out)):
 			os.makedirs(os.path.dirname(out))
-		SetSpacing(image, out, args.spacing)
+		DilateImage(image,args.closing_radius)
+
 		
 
 if __name__ ==  '__main__':
@@ -42,7 +42,7 @@ if __name__ ==  '__main__':
 	input_params.add_argument('--image', type=str, help='Input 3D image')
 	input_params.add_argument('--dir', type=str, help='Input directory with 3D images')
 
-	input_group.add_argument('-s','--spacing', nargs="+", type=float, help='Wanted output x spacing', default=[0.5,0.5,0.5])
+	input_group.add_argument('-cr','--closing_radius', type=int, help='Wanted output x spacing', default=3)
 
 	output_params = parser.add_argument_group('Output parameters')
 	output_params.add_argument('--out', type=str, help='Output directory', required=True)

@@ -10,7 +10,7 @@ from numpy.ma.core import getdata
 #  setFile spacing
 # #####################################
 
-def SetSpacing(filepath,outpath,output_spacing=[0.5, 0.5, 0.5]):
+def SetSpacing(filepath,outpath,output_spacing=[0.5, 0.5, 0.5],output_size = -1):
     
     print("Reading:", filepath)
     img = itk.imread(filepath)
@@ -26,7 +26,8 @@ def SetSpacing(filepath,outpath,output_spacing=[0.5, 0.5, 0.5]):
         size = itk.size(img)
         scale = spacing/output_spacing
 
-        output_size = (np.array(size)*scale).astype(int).tolist()
+        if output_size == -1:
+            output_size = (np.array(size)*scale).astype(int).tolist()
         output_origin = img.GetOrigin()
 
         #Find new origin
@@ -67,3 +68,39 @@ def SetSpacing(filepath,outpath,output_spacing=[0.5, 0.5, 0.5]):
     else:
         # print("Already at the wanted spacing")
         itk.imwrite(img, outpath)
+
+
+
+def CloseImage(filepath,closing_radius = 1):
+    
+    if True in [seg in os.path.basename(filepath) for seg in ["seg","Seg"]]:
+        
+        print("Reading:", filepath)
+        # Read the file into an sitkImage
+        image = sitk.ReadImage(filepath)
+        
+        # Threshold the value [0,2), results in values inside the range 1, 0 otherwise)
+        
+        closed_image = sitk.BinaryMorphologicalClosing(image, [closing_radius] * image.GetDimension())
+
+        writer = sitk.ImageFileWriter()
+        writer.SetFileName(os.path.dirname(filepath) + "/C_" + os.path.basename(filepath))
+        writer.Execute(closed_image)
+
+def DilateImage(filepath,closing_radius = 1):
+    
+    if True in [seg in os.path.basename(filepath) for seg in ["seg","Seg"]]:
+        
+        print("Reading:", filepath)
+        # Read the file into an sitkImage
+        image = sitk.ReadImage(filepath)
+        
+        # Threshold the value [0,2), results in values inside the range 1, 0 otherwise)
+        
+        dilate_image = sitk.BinaryDilate(image, [closing_radius] * image.GetDimension())
+
+        writer = sitk.ImageFileWriter()
+        writer.SetFileName(os.path.dirname(filepath) + "/D_" + os.path.basename(filepath))
+        writer.Execute(dilate_image)
+
+

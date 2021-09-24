@@ -1,10 +1,7 @@
-import medpy.io
-import nibabel as nib
-import nrrd
-import os
-
+import SimpleITK as sitk
 import numpy as np
 import pandas as pd
+import os
 
 
 
@@ -18,43 +15,26 @@ def ReadFile_info(filepath, verbose=1):
 
         
     header = None
-    if '.nii' in filepath: img_info = Read_nifti_header(filepath)
-    elif '.gipl' in filepath: img_info = Read_gipl_header(filepath)
-    elif '.nrrd' in filepath: img_info = Read_nrrd_header(filepath)
-    return img_info
+    if '.nii' in filepath: img_type = "nifti"
+    elif '.gipl' in filepath: img_type = "gipl"
+    elif '.nrrd' in filepath: img_type = "nrrd"
 
-def Read_nifti_header(filepath):
-    img = nib.load(filepath)
-    header = img.header
-    img_dim = header['dim'][1:4][:]
-    img_pixdim = header['pixdim'][1:4][:]
-    img_origin = [header['qoffset_x'],header['qoffset_y'],header['qoffset_z']]
-    img_info = np.array([img_dim, img_pixdim, img_origin])
-    # img_info = np.around(img_info, decimals=2)
-    # print(img_info.dtype)
-    return img_info,"nifti"
+    ref = sitk.ReadImage(filepath)
+    ref_size = np.array(ref.GetSize())
+    ref_spacing = np.array(ref.GetSpacing())
+    ref_origin = np.array(ref.GetOrigin())
 
-def Read_gipl_header(filepath):
-    img, header = medpy.io.load(filepath)
-    img = np.array(img)
-    # print(img.shape)
-    img_dim = img.shape
-    img_pixdim = medpy.io.Header.get_voxel_spacing(header)
-    img_origin = medpy.io.Header.get_offset(header)
-    # img = medpy.io.set_pixel_spacing(header,(0.5,0.5,0.5))
-    img_info = np.array([img_dim, img_pixdim, img_origin])
-    # img_info = np.around(img_info, decimals=2)
-    # print(img_info.dtype)
-    return img_info,"gipl"
 
-def Read_nrrd_header(filepath):
-    img, header = nrrd.read(filepath)
-    # print(header)
-    # return img_info,"nrrd"
+    img_info = [ref_size, ref_spacing, ref_origin]
+    return img_info,img_type
+
+
 
 def GenTxtFile(outdir_path, folderI):
 
     imgsI = folderI['scan_info']
+    patient_nbr = folderI['gipl']+folderI['nifti']+folderI['nrrd']
+
     file_name = os.path.join(outdir_path,"FolderData.txt")
     f = open(file_name,'w')
     f.write("*********************************************\n")
@@ -62,10 +42,11 @@ def GenTxtFile(outdir_path, folderI):
     f.write("*********************************************\n")
     f.write("\n")
     f.write("Folder name : "+ folderI['name'] +"\n")
-    f.write("   nifti files : "+ str(folderI['nifti']) +"\n")
-    f.write("   gipl files : "+ str(folderI['gipl']) +"\n")
-    f.write("   nrrd files : "+ str(folderI['nrrd']) +"\n")
-    f.write("   TOTAL files : "+ str(folderI['gipl']+folderI['nifti']+folderI['nrrd']) +"\n")
+    f.write("   nifti files : "+ str(folderI['nifti']*2) +"\n")
+    f.write("   gipl files : "+ str(folderI['gipl']*2) +"\n")
+    f.write("   nrrd files : "+ str(folderI['nrrd']*2) +"\n")
+    f.write("   TOTAL files : "+ str(patient_nbr*2) +"\n")
+    f.write("   Number of patients : "+ str(patient_nbr) +"\n")
     # f.write( data + "\n")
     f.close
 

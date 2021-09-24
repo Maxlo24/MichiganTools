@@ -1,14 +1,20 @@
-from medpy.io import header
+# from medpy.io import header
 from utils import *
 
 import argparse
 import glob
+import sys
 
-import medpy.io
+# import medpy.io
 
 def main(args):
+
+    scan_lst = []
+    seg_lst =[]
+
+    outpath = args.out
     
-    img_fn_array = []
+    data_lst = []
     imgs_infos = []
     folder_info = {
         'name': 'input_folder',
@@ -23,33 +29,53 @@ def main(args):
         'spy' : {},
         'spz' : {},
     }
+
+    if not os.path.exists(outpath):
+        os.makedirs(outpath)
     
     if args.image:
         img_obj = {}
         img_obj["img"] = args.image
-        img_obj["out"] = args.out
-        img_fn_array.append(img_obj)
+        data_lst.append(img_obj)
         folder_info['name'] = args.image
         
     elif args.dir:
         folder_info['name'] = args.dir
         normpath = os.path.normpath("/".join([args.dir, '**', '']))
-        for img_fn in glob.iglob(normpath, recursive=True):
+        for img_fn in sorted(glob.iglob(normpath, recursive=True)):
             if os.path.isfile(img_fn) and True in [ext in img_fn for ext in [".nrrd", ".nrrd.gz", ".nii", ".nii.gz", ".gipl", ".gipl.gz"]]:
-                img_obj = {}
-                img_obj["img"] = img_fn
-                img_obj["out"] = os.path.normpath("/".join([args.out]))  # Is it better to do  "out_path = os.path.normpath("/".join([args.out]))" only once at the start
-                img_fn_array.append(img_obj)
+                if True in [seg in img_fn for seg in ["Seg","seg"]]:
+                    seg_lst.append(img_fn)
+                else:
+                    scan_lst.append(img_fn)
+                # img_obj = {}
+                # img_obj["img"] = img_fn
+                # img_obj["out"] = os.path.normpath("/".join([args.out]))  # Is it better to do  "out_path = os.path.normpath("/".join([args.out]))" only once at the start
+                # img_fn_array.append(img_obj)
+    
+    if len(scan_lst) != len(seg_lst):
 
-    nbr_of_scans = len(img_fn_array)
-
-    for img_obj in img_fn_array:
-        image = img_obj["img"]
-        out = img_obj["out"]
+        print("ERROR : folder dont have the same number of scans and seg", file=sys.stderr)
+        print("Lead : make sure all the segmentation files have 'seg' or 'Seg' in their name")
+        print('       Scan number : ',len(scan_lst))
+        print('       Seg number : ',len(seg_lst))
         
-        if not os.path.exists(out):
-            os.makedirs(out)
-            
+        raise 
+
+    for i,scan in enumerate(scan_lst):
+        data = {}
+        data["scan"] = scan
+        data["seg"] = seg_lst[i]
+        data_lst.append(data)
+
+    nbr_of_patient = len(data_lst)
+
+    print(nbr_of_patient, " patient in folder")
+
+    for patient in data_lst:
+
+        image = patient["scan"]
+        
         img_info, img_type = ReadFile_info(image)
         img_data = {'Path': image,'Dim':img_info[0],'Scale':img_info[1],'Origin':img_info[2],'Type':img_type}
         
@@ -63,6 +89,8 @@ def main(args):
         imgs_infos.append(img_data)
 
         folder_info[img_type]+=1
+
+        ReadFile_info(patient["seg"])
 
         # print(img_data[1])
 
